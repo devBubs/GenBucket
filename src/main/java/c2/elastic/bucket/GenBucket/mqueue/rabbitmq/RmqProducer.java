@@ -13,22 +13,20 @@ import java.util.concurrent.TimeoutException;
 @Slf4j
 public abstract class RmqProducer<T> extends Producer<RmqMessage> {
 
-    private final Exchange exchange;
+    private Exchange exchange;
     private final GenericObjectPool<Channel> channelPool;
     private final Connection connection;
     private final RmqProducerConfig producerConfig;
 
-    public RmqProducer(Exchange exchange, Connection connection, RmqProducerConfig producerConfig) throws IOException, TimeoutException {
-        this.exchange = exchange;
+    public RmqProducer(Connection connection, RmqProducerConfig producerConfig) {
         this.connection = connection;
         this.producerConfig = producerConfig;
         channelPool = getChannelPool();
-        Runtime.getRuntime().addShutdownHook(new Thread(){
-            @Override
-            public void run() {
-                shutdown();
-            }
-        });
+        Runtime.getRuntime().addShutdownHook(new Thread(this::shutdown));
+    }
+
+    public void bind(Exchange exchange){
+        this.exchange = exchange;
     }
 
     protected abstract RmqMessage convert(T message);

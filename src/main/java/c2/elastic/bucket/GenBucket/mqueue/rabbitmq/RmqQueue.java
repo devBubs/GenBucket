@@ -12,8 +12,4 @@ import lombok.NoArgsConstructor;
 @Data
 public class RmqQueue implements Queue {
     private String queueName;
-    private String hosts;
-    private String username;
-    private String password;
-    private int port;
 }

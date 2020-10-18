@@ -12,8 +12,4 @@ import lombok.NoArgsConstructor;
 public class Exchange {
     private String exchangeName;
     private String exchangeType;
-    private String hosts;
-    private String username;
-    private String password;
-    private int port;
 }

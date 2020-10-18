@@ -16,27 +16,25 @@ import static java.lang.Math.min;
 @Slf4j
 public abstract class RmqConsumer implements Consumer<RmqQueue, RmqMessage> {
 
-    private final RmqQueue queue;
     private ExecutorService workers;
     private final Connection connection;
     private final RmqConsumerConfig consumerConfig;
     private final int WAIT = 10000;
 
-    protected RmqConsumer(RmqQueue queue, Connection connection, RmqConsumerConfig consumerConfig) {
-        this.queue = queue;
+    protected RmqConsumer(Connection connection, RmqConsumerConfig consumerConfig) {
         this.connection = connection;
         this.consumerConfig = consumerConfig;
     }
 
-    //protected abstract void preAck(RmqMessage message);
+    protected abstract void preAck(RmqMessage message);
 
     protected abstract void onFailedConsume(RmqMessage message);
 
     @Override
-    public void bind() {
+    public void bind(RmqQueue queue) {
         workers = Executors.newFixedThreadPool(consumerConfig.getNumConsumers());
         for (int i = 0; i < consumerConfig.getNumConsumers(); ++i) {
-            workers.submit(new StartConsumerCallable());
+            workers.submit(new StartConsumerCallable(queue));
         }
         Runtime.getRuntime().addShutdownHook(new Thread(this::shutdown));
     }
@@ -56,6 +54,12 @@ public abstract class RmqConsumer implements Consumer<RmqQueue, RmqMessage> {
 
     private class StartConsumerCallable implements Callable<Void> {
 
+        private final RmqQueue queue;
+
+        public StartConsumerCallable(RmqQueue queue) {
+            this.queue = queue;
+        }
+
         @Override
         public Void call() throws IOException {
             Channel channel = connection.createChannel();
@@ -67,10 +71,10 @@ public abstract class RmqConsumer implements Consumer<RmqQueue, RmqMessage> {
                 while (numTries <= consumerConfig.getMaxRetries()) {
                     try {
                         consume(message);
-//                        if (!consumerConfig.isAutoAck()) {
-//                            preAck(message);
-//                            channel.basicAck(delivery.getEnvelope().getDeliveryTag(), consumerConfig.isRejectAllUntilDelivery());
-//                        }
+                        if (!consumerConfig.isAutoAck()) {
+                            preAck(message);
+                            channel.basicAck(delivery.getEnvelope().getDeliveryTag(), consumerConfig.isRejectAllUntilDelivery());
+                        }
                         break;
                     } catch (Exception e) {
                         numTries++;
