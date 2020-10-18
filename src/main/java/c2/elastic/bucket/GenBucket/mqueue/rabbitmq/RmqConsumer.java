@@ -94,7 +94,8 @@ public abstract class RmqConsumer implements Consumer<RmqQueue, RmqMessage> {
 
             };
             log.info("Starting consumer");
-            channel.basicConsume(queue.getQueueName(), consumerConfig.isAutoAck(), deliverCallback, consumerTag -> {});
+            channel.basicConsume(queue.getQueueName(), consumerConfig.isAutoAck(), deliverCallback, consumerTag -> {
+            });
             return null;
         }
     }

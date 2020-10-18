@@ -8,7 +8,7 @@ import org.apache.commons.pool2.impl.GenericObjectPool;
 import org.apache.commons.pool2.impl.GenericObjectPoolConfig;
 
 import java.io.IOException;
-import java.util.concurrent.TimeoutException;
+
 
 @Slf4j
 public abstract class RmqProducer<T> extends Producer<RmqMessage> {
@@ -25,7 +25,7 @@ public abstract class RmqProducer<T> extends Producer<RmqMessage> {
         Runtime.getRuntime().addShutdownHook(new Thread(this::shutdown));
     }
 
-    public void bind(Exchange exchange){
+    public void bind(Exchange exchange) {
         this.exchange = exchange;
     }
 
@@ -45,7 +45,7 @@ public abstract class RmqProducer<T> extends Producer<RmqMessage> {
     @Override
     public void shutdown() {
         log.info("Shutting down producer");
-        if(connection!=null && connection.isOpen()) {
+        if (connection != null && connection.isOpen()) {
             try {
                 channelPool.close();
                 connection.close();
@@ -55,7 +55,7 @@ public abstract class RmqProducer<T> extends Producer<RmqMessage> {
         }
     }
 
-    private GenericObjectPool<Channel> getChannelPool(){
+    private GenericObjectPool<Channel> getChannelPool() {
         GenericObjectPoolConfig<Channel> config = new GenericObjectPoolConfig<>();
         config.setMaxTotal(producerConfig.getChannel_pool_max_size());
         config.setMaxWaitMillis(producerConfig.getChannel_pool_max_wait());
