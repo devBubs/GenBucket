@@ -25,4 +25,5 @@ public class CustomConsumerConfig {
     private long fetchMaxWait;
     private boolean enableAutoCommit;
     private String autoOffsetReset;
+    private int maxRetries;
 }

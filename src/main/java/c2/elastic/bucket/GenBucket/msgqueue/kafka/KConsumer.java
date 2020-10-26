@@ -9,14 +9,16 @@ import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 
 import java.time.Duration;
-import java.util.Collection;
+import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 @Slf4j
-public abstract class KConsumer<T,M> implements Consumer<M> {
+public abstract class KConsumer<K, V> implements Consumer<V> {
 
     private final CustomConsumerConfig configuration;
     private final Properties properties;
@@ -52,16 +54,24 @@ public abstract class KConsumer<T,M> implements Consumer<M> {
     }
 
     private class StartConsumerCallable implements Callable<Void>{
+        //Supports only commitSync as of now.
+        //TODO: add support of autoCommit and CommitAsync.
         @Override
         public Void call() {
-            try(KafkaConsumer<T,M> kafkaConsumer = new KafkaConsumer<>(properties)){
+            try(KafkaConsumer<K, V> kafkaConsumer = new KafkaConsumer<>(properties)){
                 kafkaConsumer.subscribe(configuration.getTopics());
                 log.info("{}: Starting a new kafka consumer", configuration.getGroupId());
                 while(true){
                     Duration duration = Duration.ofMillis(configuration.getPollTimeOutDuration());
-                    ConsumerRecords<T, M> records = kafkaConsumer.poll(duration);
-                    for(ConsumerRecord<T, M> record: records){
-                        consume(record.value());
+                    ConsumerRecords<K, V> records = kafkaConsumer.poll(duration);
+                    final List<V> messages = StreamSupport.stream(records.spliterator(), false)
+                            .map(ConsumerRecord::value)
+                            .collect(Collectors.toList());
+
+                    try {
+                        consume(messages);
+                    } catch (Exception e){
+
                     }
                     try{
                         kafkaConsumer.commitSync();
