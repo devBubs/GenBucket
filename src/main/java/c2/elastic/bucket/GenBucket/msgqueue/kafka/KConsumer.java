@@ -18,21 +18,17 @@ import java.util.concurrent.Executors;
 @Slf4j
 public abstract class KConsumer<T,M> implements Consumer<M> {
 
-    private final String consumerGroup;
     private final CustomConsumerConfig configuration;
     private final Properties properties;
-    private final Collection<String> topics;
     private ExecutorService workers;
 
-    public KConsumer(CustomConsumerConfig configuration, Collection<String> topics) {
+    public KConsumer(CustomConsumerConfig configuration) {
         this.properties = new Properties();
-        this.consumerGroup = configuration.getGroupId();
         this.configuration = configuration;
-        this.topics = topics;
         properties.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG,configuration.getBootstrapServers());
         properties.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, configuration.getKeyDeserializer());
         properties.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, configuration.getValueDeserializer());
-        properties.put(ConsumerConfig.GROUP_ID_CONFIG, consumerGroup);
+        properties.put(ConsumerConfig.GROUP_ID_CONFIG, configuration.getGroupId());
         properties.put(ConsumerConfig.FETCH_MIN_BYTES_CONFIG, configuration.getFetchMinBytes());
         properties.put(ConsumerConfig.FETCH_MAX_WAIT_MS_CONFIG, configuration.getFetchMaxWait());
         properties.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, configuration.isEnableAutoCommit());
@@ -59,8 +55,8 @@ public abstract class KConsumer<T,M> implements Consumer<M> {
         @Override
         public Void call() {
             try(KafkaConsumer<T,M> kafkaConsumer = new KafkaConsumer<>(properties)){
-                kafkaConsumer.subscribe(topics);
-                log.info("{}: Starting a new kafka consumer", consumerGroup);
+                kafkaConsumer.subscribe(configuration.getTopics());
+                log.info("{}: Starting a new kafka consumer", configuration.getGroupId());
                 while(true){
                     Duration duration = Duration.ofMillis(configuration.getPollTimeOutDuration());
                     ConsumerRecords<T, M> records = kafkaConsumer.poll(duration);
@@ -74,7 +70,7 @@ public abstract class KConsumer<T,M> implements Consumer<M> {
                     }
                 }
             }catch (Exception e){
-                log.error("{}: Encountered error -> {}", consumerGroup, e);
+                log.error("{}: Encountered error -> {}", configuration.getGroupId(), e);
             }
             return null;
         }

@@ -6,6 +6,8 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 
+import java.util.Collection;
+
 @ToString
 @Data
 @Builder
@@ -13,6 +15,7 @@ import lombok.ToString;
 @NoArgsConstructor
 public class CustomConsumerConfig {
     private String groupId;
+    private Collection<String> topics;
     private int numWorkers;
     private long pollTimeOutDuration;
     private String bootstrapServers;
@@ -22,5 +25,4 @@ public class CustomConsumerConfig {
     private long fetchMaxWait;
     private boolean enableAutoCommit;
     private String autoOffsetReset;
-
 }
