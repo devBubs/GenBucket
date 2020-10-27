@@ -16,11 +16,11 @@ public class PoolableKafkaProducerFactory<T, M>  extends BasePooledObjectFactory
 
     @Override
     public KafkaProducer<T, M> create() throws Exception {
-        return new KafkaProducer<T, M>(producerProperties);
+        return new KafkaProducer<>(producerProperties);
     }
 
     @Override
     public PooledObject<KafkaProducer<T, M>> wrap(KafkaProducer<T, M> kafkaProducer) {
-        return new DefaultPooledObject<KafkaProducer<T, M>>(kafkaProducer);
+        return new DefaultPooledObject<>(kafkaProducer);
     }
 }

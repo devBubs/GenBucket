@@ -21,9 +21,10 @@ public class CustomConsumerConfig {
     private String bootstrapServers;
     private String keyDeserializer;
     private String valueDeserializer;
-    private long fetchMinBytes;
-    private long fetchMaxWait;
+    private int fetchMinBytes;
+    private int fetchMaxWait;
     private boolean enableAutoCommit;
     private String autoOffsetReset;
+    // TODO: support retry
     private int maxRetries;
 }

@@ -27,7 +27,7 @@ public abstract class KConsumer<K, V> implements Consumer<V> {
     public KConsumer(CustomConsumerConfig configuration) {
         this.properties = new Properties();
         this.configuration = configuration;
-        properties.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG,configuration.getBootstrapServers());
+        properties.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, configuration.getBootstrapServers());
         properties.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, configuration.getKeyDeserializer());
         properties.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, configuration.getValueDeserializer());
         properties.put(ConsumerConfig.GROUP_ID_CONFIG, configuration.getGroupId());
@@ -40,7 +40,7 @@ public abstract class KConsumer<K, V> implements Consumer<V> {
     @Override
     public void bind() {
         workers = Executors.newFixedThreadPool(configuration.getNumWorkers());
-        for(int i=0; i<configuration.getNumWorkers(); ++i){
+        for (int i = 0; i < configuration.getNumWorkers(); ++i) {
             workers.submit(new StartConsumerCallable());
         }
         Runtime.getRuntime().addShutdownHook(new Thread(this::shutdown));
@@ -53,34 +53,34 @@ public abstract class KConsumer<K, V> implements Consumer<V> {
         workers.shutdownNow();
     }
 
-    private class StartConsumerCallable implements Callable<Void>{
+    private class StartConsumerCallable implements Callable<Void> {
         //Supports only commitSync as of now.
         //TODO: add support of autoCommit and CommitAsync.
         @Override
         public Void call() {
-            try(KafkaConsumer<K, V> kafkaConsumer = new KafkaConsumer<>(properties)){
+            try (KafkaConsumer<K, V> kafkaConsumer = new KafkaConsumer<>(properties)) {
                 kafkaConsumer.subscribe(configuration.getTopics());
                 log.info("{}: Starting a new kafka consumer", configuration.getGroupId());
-                while(true){
+                while (true) {
                     Duration duration = Duration.ofMillis(configuration.getPollTimeOutDuration());
                     ConsumerRecords<K, V> records = kafkaConsumer.poll(duration);
                     final List<V> messages = StreamSupport.stream(records.spliterator(), false)
                             .map(ConsumerRecord::value)
                             .collect(Collectors.toList());
-
                     try {
                         consume(messages);
-                    } catch (Exception e){
-
+                    } catch (Exception e) {
+                        // TODO: support sidelining
+                        log.error("{}: Consume failed -> ", configuration.getGroupId(), e);
                     }
-                    try{
+                    try {
                         kafkaConsumer.commitSync();
-                    } catch (CommitFailedException e){
+                    } catch (CommitFailedException e) {
                         onFailedCommit(e);
                     }
                 }
-            }catch (Exception e){
-                log.error("{}: Encountered error -> {}", configuration.getGroupId(), e);
+            } catch (Exception e) {
+                log.error("{}: Encountered error -> ", configuration.getGroupId(), e);
             }
             return null;
         }
