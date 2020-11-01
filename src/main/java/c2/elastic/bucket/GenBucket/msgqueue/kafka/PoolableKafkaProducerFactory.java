@@ -4,7 +4,7 @@ import org.apache.commons.pool2.BasePooledObjectFactory;
 import org.apache.commons.pool2.PooledObject;
 import org.apache.commons.pool2.impl.DefaultPooledObject;
 import org.apache.kafka.clients.producer.KafkaProducer;
-import org.apache.kafka.common.serialization.Serializer
+import org.apache.kafka.common.serialization.Serializer;
 
 import java.util.Properties;
 
