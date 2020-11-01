@@ -10,6 +10,7 @@ import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.clients.producer.RecordMetadata;
+import org.apache.kafka.common.serialization.Serializer;
 
 import java.util.List;
 import java.util.Properties;
@@ -23,13 +24,15 @@ public abstract class KProducer<K, V> extends Producer<K, V> {
     private final CustomProducerConfig configuration;
     private final Properties properties;
     private GenericObjectPool<KafkaProducer<K, V>> producerPool;
+    private final Serializer<K> keySerializer;
+    private final Serializer<V> valueSerializer;
 
-    public KProducer(CustomProducerConfig configuration) {
+    public KProducer(CustomProducerConfig configuration, Serializer<K> keySerializer, Serializer<V> valueSerializer) {
         this.configuration = configuration;
         this.properties = new Properties();
+        this.keySerializer = keySerializer;
+        this.valueSerializer = valueSerializer;
         properties.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, configuration.getBootstrapServers());
-        properties.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, configuration.getKeySerializer());
-        properties.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, configuration.getValueSerializer());
     }
 
     @Override
@@ -37,7 +40,7 @@ public abstract class KProducer<K, V> extends Producer<K, V> {
         GenericObjectPoolConfig<KafkaProducer<K, V>> poolConfig = new GenericObjectPoolConfig<>();
         poolConfig.setMaxTotal(configuration.getNumWorkers());
         poolConfig.setMaxWaitMillis(configuration.getProducerPoolMaxWait());
-        this.producerPool = new GenericObjectPool<>(new PoolableKafkaProducerFactory<>(properties));
+        this.producerPool = new GenericObjectPool<>(new PoolableKafkaProducerFactory<>(properties, keySerializer, valueSerializer));
         Runtime.getRuntime().addShutdownHook(new Thread(this::shutdown));
     }
 
