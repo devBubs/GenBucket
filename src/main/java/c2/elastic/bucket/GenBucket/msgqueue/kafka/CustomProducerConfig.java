@@ -15,7 +15,5 @@ public class CustomProducerConfig {
     private int numWorkers;
     private String bootstrapServers;
     private String topic;
-    private String keySerializer;
-    private String valueSerializer;
     private long producerPoolMaxWait;
 }

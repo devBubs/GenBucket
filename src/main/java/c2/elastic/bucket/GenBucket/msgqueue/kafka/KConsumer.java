@@ -7,6 +7,7 @@ import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
+import org.apache.kafka.common.serialization.Deserializer;
 
 import java.time.Duration;
 import java.util.List;
@@ -23,13 +24,15 @@ public abstract class KConsumer<K, V> implements Consumer<V> {
     private final CustomConsumerConfig configuration;
     private final Properties properties;
     private ExecutorService workers;
+    private final Deserializer<K> keyDeserializer;
+    private final Deserializer<V> valueDeserializer;
 
-    public KConsumer(CustomConsumerConfig configuration) {
+    public KConsumer(CustomConsumerConfig configuration, Deserializer<K> keyDeserializer, Deserializer<V> valueDeserializer) {
         this.properties = new Properties();
+        this.keyDeserializer = keyDeserializer;
+        this.valueDeserializer = valueDeserializer;
         this.configuration = configuration;
         properties.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, configuration.getBootstrapServers());
-        properties.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, configuration.getKeyDeserializer());
-        properties.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, configuration.getValueDeserializer());
         properties.put(ConsumerConfig.GROUP_ID_CONFIG, configuration.getGroupId());
         properties.put(ConsumerConfig.FETCH_MIN_BYTES_CONFIG, configuration.getFetchMinBytes());
         properties.put(ConsumerConfig.FETCH_MAX_WAIT_MS_CONFIG, configuration.getFetchMaxWait());
@@ -58,7 +61,7 @@ public abstract class KConsumer<K, V> implements Consumer<V> {
         //TODO: add support of autoCommit and CommitAsync.
         @Override
         public Void call() {
-            try (KafkaConsumer<K, V> kafkaConsumer = new KafkaConsumer<>(properties)) {
+            try (KafkaConsumer<K, V> kafkaConsumer = new KafkaConsumer<>(properties, keyDeserializer, valueDeserializer)) {
                 kafkaConsumer.subscribe(configuration.getTopics());
                 log.info("{}: Starting a new kafka consumer", configuration.getGroupId());
                 while (true) {
