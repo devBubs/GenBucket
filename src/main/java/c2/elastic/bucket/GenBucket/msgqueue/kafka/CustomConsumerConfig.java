@@ -19,8 +19,6 @@ public class CustomConsumerConfig {
     private int numWorkers;
     private long pollTimeOutDuration;
     private String bootstrapServers;
-    private String keyDeserializer;
-    private String valueDeserializer;
     private int fetchMinBytes;
     private int fetchMaxWait;
     private boolean enableAutoCommit;
